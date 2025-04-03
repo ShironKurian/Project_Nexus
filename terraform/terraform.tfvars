@@ -1,0 +1,7 @@
+aws_region = "us-east-1"
+db_instance_class = "db.t3.micro"
+db_name = "taskmanager"
+db_username = "root"
+db_password = "Password123"
+db_allocated_storage = "20"
+db_engine_version = "15"
