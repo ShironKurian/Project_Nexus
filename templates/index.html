@@ -1,0 +1,61 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DevOps Task Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        async function loadTasks() {
+            const response = await fetch('/tasks');
+            const tasks = await response.json();
+            const taskList = document.getElementById("task-list");
+            taskList.innerHTML = "";
+
+            tasks.forEach(task => {
+                const item = document.createElement("li");
+                item.innerHTML = `<strong>${task.task_name}</strong><br><span>${task.task_description}</span>`;
+                taskList.appendChild(item);
+            });
+        }
+
+        async function addTask(event) {
+            event.preventDefault();
+            const name = document.getElementById("task_name").value;
+            const description = document.getElementById("task_description").value;
+
+            await fetch('/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task_name: name, task_description: description })
+            });
+
+            document.getElementById("task-form").reset();
+            loadTasks();
+        }
+
+        window.onload = loadTasks;
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>DevOps Task Tracker</h1>
+
+        <form id="task-form" onsubmit="addTask(event)">
+            <label for="task_name">Task Title</label>
+            <input type="text" id="task_name" placeholder="e.g., Dockerize Flask app" required>
+
+            <label for="task_description">Task Details</label>
+            <textarea id="task_description" placeholder="e.g., Write Dockerfile, test locally, push to ECR" required></textarea>
+
+            <div class="form-buttons">
+                <button type="submit">➕ Add Task</button>
+                <button type="reset">🧹 Clear Form</button>
+            </div>
+        </form>
+
+        <h2>🗂️ Current DevOps Tasks</h2>
+        <ul id="task-list"></ul>
+    </div>
+</body>
+</html>

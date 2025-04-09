@@ -7,7 +7,7 @@ app = Flask(__name__)
 # Database connection function
 def get_db_connection():
     conn = psycopg2.connect(
-        host="terraform-20250402235435237700000001.ciqjg5wzowqt.us-east-1.rds.amazonaws.com:5432",
+        host="terraform-20250409173832660600000001.ckpw4u04e172.us-east-1.rds.amazonaws.com",
         database="taskmanager",
         user="root",
         password="Password123"
@@ -46,7 +46,8 @@ def get_tasks():
     cur.close()
     conn.close()
 
-    return jsonify([dict(task) for task in tasks])
+    # Adjust the returned structure to match what the frontend expects
+    return jsonify([{'id': task['id'], 'task_name': task['task_name'], 'task_description': task['task_description']} for task in tasks])
 
 # Update Task
 @app.route('/tasks/<int:id>', methods=['PUT'])
