@@ -10,10 +10,29 @@ pipeline {
     }
 
     stages {
+        stage('Check AWS CLI and Docker') {
+            steps {
+                script {
+                    // Check AWS CLI version
+                    def awsCheck = bat(script: 'aws --version', returnStatus: true, wait: true)
+                    if (awsCheck != 0) {
+                        error "AWS CLI is not installed or not in PATH"
+                    }
+
+                    // Check Docker version
+                    def dockerCheck = bat(script: 'docker --version', returnStatus: true, wait: true)
+                    if (dockerCheck != 0) {
+                        error "Docker is not installed or not in PATH"
+                    }
+                }
+            }
+        }
+
         stage('Docker Build') {
             steps {
                 script {
-                    bat 'docker build -t %IMAGE_NAME% .'
+                    // Build the Docker image
+                    bat "docker build -t ${IMAGE_NAME} ."
                 }
             }
         }
@@ -21,9 +40,14 @@ pipeline {
         stage('ECR Login') {
             steps {
                 script {
-                    bat """
-                        aws ecr get-login-password --region %AWS_REGION% | docker login --username AWS --password-stdin %AWS_ACCOUNT_ID%.dkr.ecr.%AWS_REGION%.amazonaws.com
-                    """
+                    // Login to AWS ECR
+                    def loginStatus = bat(script: """
+                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                    """, returnStatus: true, wait: true)
+                    if (loginStatus != 0) {
+                        error "ECR Login failed"
+                    }
+                    echo "Successfully logged in to ECR"
                 }
             }
         }
@@ -31,10 +55,21 @@ pipeline {
         stage('Docker Push') {
             steps {
                 script {
-                    bat """
-                        docker tag %IMAGE_NAME%:latest %AWS_ACCOUNT_ID%.dkr.ecr.%AWS_REGION%.amazonaws.com/%ECR_REPO%:latest
-                        docker push %AWS_ACCOUNT_ID%.dkr.ecr.%AWS_REGION%.amazonaws.com/%ECR_REPO%:latest
-                    """
+                    // Tag the image and push to ECR
+                    def tagStatus = bat(script: """
+                        docker tag ${IMAGE_NAME}:latest ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
+                    """, returnStatus: true, wait: true)
+                    if (tagStatus != 0) {
+                        error "Docker tagging failed"
+                    }
+                    
+                    def pushStatus = bat(script: """
+                        docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
+                    """, returnStatus: true, wait: true)
+                    if (pushStatus != 0) {
+                        error "Docker push failed"
+                    }
+                    echo "Docker image pushed successfully to ECR"
                 }
             }
         }
@@ -42,7 +77,12 @@ pipeline {
         stage('Deploy to EKS') {
             steps {
                 script {
-                    bat 'kubectl apply -f deployment.yaml'
+                    // Apply the deployment to EKS
+                    def applyStatus = bat(script: 'kubectl apply -f deployment.yaml', returnStatus: true, wait: true)
+                    if (applyStatus != 0) {
+                        error "Deployment to EKS failed"
+                    }
+                    echo "Deployment to EKS successful!"
                 }
             }
         }
