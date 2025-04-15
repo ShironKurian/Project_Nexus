@@ -77,6 +77,14 @@ pipeline {
         stage('Deploy to EKS') {
             steps {
                 script {
+                    // Update kubeconfig for kubectl to access the EKS cluster
+                    def updateKubeconfigStatus = bat(script: """
+                        aws eks update-kubeconfig --name ${EKS_CLUSTER} --region ${AWS_REGION}
+                    """, returnStatus: true, wait: true)
+                    if (updateKubeconfigStatus != 0) {
+                        error "Failed to update kubeconfig for EKS"
+                    }
+
                     // Apply the deployment to EKS
                     def applyStatus = bat(script: 'kubectl apply -f deployment.yaml', returnStatus: true, wait: true)
                     if (applyStatus != 0) {
