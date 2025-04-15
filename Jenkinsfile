@@ -7,13 +7,6 @@ pipeline {
         IMAGE_TAG = 'latest'
     }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/ShironKurian/Project_Nexus.git'
-            }
-        }
-
         stage('Docker Build') {
             steps {
                 sh 'docker build -t task-master:latest .'
