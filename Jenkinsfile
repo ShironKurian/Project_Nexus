@@ -6,14 +6,14 @@ pipeline {
         ECR_REGISTRY   = '643716337997.dkr.ecr.us-east-1.amazonaws.com'
         ECR_REPO       = 'task-master'
         IMAGE_NAME     = "${ECR_REGISTRY}/${ECR_REPO}:latest"
+        PATH           = "/var/lib/jenkins/.local/bin:$PATH"
     }
 
     stages {
-
         stage('Checkout Code') {
             steps {
-                git credentialsId: 'github-credentials', 
-                    url: 'https://github.com/ShironKurian/Project_Nexus.git', 
+                git credentialsId: 'github-credentials',
+                    url: 'https://github.com/ShironKurian/Project_Nexus.git',
                     branch: 'main'
             }
         }
@@ -32,7 +32,8 @@ pipeline {
                     python3 -m ensurepip --upgrade || true
                     python3 -m pip install --upgrade pip
                     python3 -m pip install -r requirements.txt
-                    python3 -m pip install pytest
+                    python3 -m pip install --user pytest
+                    export PATH=$HOME/.local/bin:$PATH
                     pytest tests/ --maxfail=1 --disable-warnings -q
                 '''
             }
@@ -41,8 +42,8 @@ pipeline {
         stage('Login to AWS ECR') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'aws-credentials', 
-                    usernameVariable: 'AWS_ACCESS_KEY_ID', 
+                    credentialsId: 'aws-credentials',
+                    usernameVariable: 'AWS_ACCESS_KEY_ID',
                     passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                 )]) {
                     sh '''
