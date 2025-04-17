@@ -26,22 +26,15 @@ pipeline {
         stage('Run Unit Tests') {
             steps {
                 sh '''
-                    # Upgrade pip and install requirements
-                    python3 -m ensurepip --upgrade || true
-                    python3 -m pip install --upgrade pip
-                    python3 -m pip install -r requirements.txt
+                    python3 -m ensurepip --upgrade
+                    python3 -m pip install --user --upgrade pip
+                    python3 -m pip install --user -r requirements.txt
+                    python3 -m pip install --user Werkzeug==2.2.3
                     python3 -m pip install --user pytest
-
-                    # ✅ Add .local/bin to PATH so pytest can be found
                     export PATH=$HOME/.local/bin:$PATH
-
-                    # ✅ Add current directory to Python path so 'from app import app' works
                     export PYTHONPATH=.
-
                     echo "✅ PATH: $PATH"
                     echo "✅ PYTHONPATH: $PYTHONPATH"
-
-                    # ✅ Run tests
                     pytest tests/ --maxfail=1 --disable-warnings -q
                 '''
             }
