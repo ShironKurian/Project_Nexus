@@ -6,7 +6,6 @@ pipeline {
         ECR_REGISTRY   = '643716337997.dkr.ecr.us-east-1.amazonaws.com'
         ECR_REPO       = 'task-master'
         IMAGE_NAME     = "${ECR_REGISTRY}/${ECR_REPO}:latest"
-        PATH           = "/var/lib/jenkins/.local/bin:$PATH"
     }
 
     stages {
@@ -34,6 +33,7 @@ pipeline {
                     python3 -m pip install -r requirements.txt
                     python3 -m pip install --user pytest
                     export PATH=$HOME/.local/bin:$PATH
+                    echo "✅ PATH is set to: $PATH"
                     pytest tests/ --maxfail=1 --disable-warnings -q
                 '''
             }
