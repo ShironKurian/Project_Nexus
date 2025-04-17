@@ -1,133 +1,131 @@
-# Project_Nexus
-Project_Nexus
-==============
+# 🚀 Task Manager Web Application | Capstone Project
 
-📌 Project Overview: "Task Manager App"
-A simple Task Manager that allows users to:
-✅ Add tasks
-✅ View tasks
-✅ Delete tasks
-📌 Tech Stack
-🔹 Backend: Flask (Python)
-🔹 Frontend: HTML, CSS, JavaScript (Flask Templates)
-🔹 Database: PostgreSQL (AWS RDS)
-🔹 Deployment: AWS Elastic Beanstalk or EC2
-
-# Project DevOps Nexus: Automated CI/CD Pipeline for Kubernetes-based Application Deployment
-
-## 📌 Project Overview
-
-**DevOps Nexus** is a capstone project that demonstrates the end-to-end implementation of DevOps practices using industry-standard tools. The project automates the build, test, and deployment process for a Flask-based Task Manager application and deploys it on a Kubernetes cluster, with observability integrated using Prometheus and Grafana.
+This project is a fully containerized and Kubernetes-deployed **Task Manager Web Application** built with Flask, integrated with PostgreSQL, and monitored using Prometheus and Grafana. The entire workflow is automated through a CI/CD pipeline implemented in **Jenkins**, making the deployment process seamless and production-ready.
 
 ---
 
-## ⚙️ Tech Stack
+## 🧠 Project Overview
 
-| Area            | Tool/Technology         |
-|-----------------|-------------------------|
-| Application     | Python Flask, HTML, JS  |
-| Version Control | Git + GitHub            |
-| Containerization| Docker                  |
-| IaC             | Terraform (AWS)         |
-| CI/CD           | Jenkins                 |
-| Orchestration   | Kubernetes (EKS)        |
-| Monitoring      | Prometheus, Grafana     |
-| Cloud Provider  | AWS (RDS, EKS, EC2)     |
+This web application allows users to manage tasks with functionalities such as:
+- Creating a task
+- Viewing tasks
+- Updating task status
+- Deleting tasks
+
+The application is designed with **microservices principles**, and it's deployed to an AWS EKS cluster with monitoring and alerting set up.
 
 ---
 
-## 📁 Folder Structure
+## 🛠️ Tech Stack
 
-/project-root │ ├── app.py ├── templates/ │ └── index.html ├── Dockerfile ├── Jenkinsfile ├── terraform/ │ ├── main.tf │ ├── variables.tf │ ├── terraform.tfvars │ └── output.tf ├── k8s/ │ └── deployment.yaml └── README.md
+| Layer               | Tools Used                                           |
+|--------------------|------------------------------------------------------|
+| Application Layer   | Python, Flask                                        |
+| Database            | PostgreSQL (hosted on RDS/local)                    |
+| Containerization    | Docker                                               |
+| CI/CD Pipeline      | Jenkins, GitHub, AWS ECR, AWS EKS                   |
+| Orchestration       | Kubernetes (EKS)                                     |
+| Monitoring          | Prometheus, Grafana                                  |
+| Infrastructure as Code | Terraform (optional module)                      |
+
+---
+
+## ⚙️ Project Architecture
+
+[ GitHub ] │ ▼ [ Jenkins (CI/CD) ] ├── Checkout code ├── Run Unit Tests (pytest) ├── Docker Build & Push to ECR └── Deploy to EKS │ ▼ [ AWS EKS Cluster ] │ └── Flask App (Pods + Service) │ ▼ [ LoadBalancer + External URL ] │ ▼ [ Prometheus & Grafana Monitoring ]
 
 
 
 ---
 
-## 🚀 Setup Instructions
+## 🔁 CI/CD Pipeline (Jenkins)
 
-### Step 1: Clone the Repository
+The Jenkins pipeline consists of the following stages:
+
+1. **Checkout Code** – Pulls source code from GitHub repo.
+2. **Build Docker Image** – Builds the Flask app Docker image.
+3. **Run Unit Tests** – Executes tests using `pytest`.
+4. **Login to ECR** – Authenticates with AWS Elastic Container Registry.
+5. **Push to ECR** – Pushes the built image.
+6. **Deploy to EKS** – Applies the Kubernetes deployment using `kubectl`.
+
+> ✅ Jenkins triggers the entire pipeline on every code push to `main`.
+
+---
+
+## 🐳 Docker
+
+Build your image locally (optional):
 
 ```bash
-git clone https://github.com/your-username/devops-nexus.git
-cd devops-nexus
-Step 2: Application Development
-Build a basic Flask application with endpoints for creating and viewing tasks.
-
-Use a PostgreSQL database (hosted on AWS RDS).
-
-Create a simple frontend using HTML and JavaScript.
-
-Validate your API using unit tests.
-
-Step 3: Dockerization
-Build a Docker image of the Flask app.
-
-Example:
-
-dockerfile
-
-FROM python:3.8-slim
-WORKDIR /app
-COPY . /app
-RUN pip install -r requirements.txt
-EXPOSE 5000
-CMD ["python", "app.py"]
-Step 4: Infrastructure with Terraform
-Provision AWS resources like VPC, Subnets, RDS, and EKS using Terraform.
-
-Example command:
+docker build -t task-master .
+Push to ECR manually (if needed):
 
 
-terraform init
-terraform plan
-terraform apply
-Step 5: CI/CD Pipeline (Jenkins)
-Configure Jenkins pipeline with stages for Source, Build, Test, and Deploy.
+docker tag task-master:latest <your-ECR-URI>
+docker push <your-ECR-URI>
+☸️ Kubernetes (EKS)
+Deploy your application:
 
-Use Docker and kubectl within the Jenkins pipeline to deploy to EKS.
 
-Step 6: Kubernetes Deployment
-Deploy the app using deployment.yaml.
+aws eks update-kubeconfig --region us-east-1 --name task-manager-cluster
+kubectl apply -f deployment.yaml
+Check the status:
 
-Expose it via LoadBalancer service.
 
-Use kubectl apply -f deployment.yaml.
+kubectl get pods
+kubectl get svc
+📊 Monitoring with Prometheus and Grafana
+Installed via Helm:
 
-Step 7: Monitoring with Prometheus & Grafana
-Deploy Prometheus and Grafana via Helm or manifests.
 
-Connect Prometheus as a data source in Grafana.
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace
+Access Grafana UI:
 
-Create dashboards to monitor app and cluster metrics.
 
-🎯 Learning Objectives
-Understand real-world application of CI/CD in Kubernetes environments.
+kubectl get svc -n monitoring
+Copy the EXTERNAL-IP for Grafana and open it in the browser.
 
-Learn how to use Terraform for Infrastructure as Code on AWS.
+Default Credentials:
 
-Build a fully automated DevOps pipeline integrating Git, Jenkins, Docker, and Kubernetes.
+Username: admin
 
-Gain hands-on experience in observability with Prometheus and Grafana.
+Password: prom-operator
 
-🧪 Testing
-Use unittest or pytest to validate the Flask API.
+📂 Directory Structure
 
-Run tests as part of your Jenkins pipeline.
+Capestone_2025/
+├── app.py
+├── requirements.txt
+├── Dockerfile
+├── Jenkinsfile
+├── deployment.yaml
+├── templates/
+├── static/
+├── tests/
+│   └── test_app.py
+└── terraform/ (optional)
 
-📝 Final Notes
-This project is built for learning-by-doing. If you're preparing for interviews at companies like EY or RBC, this end-to-end DevOps solution will give you practical talking points and experience with tools companies expect engineers to know.
+✅ Achievements
+✔️ CI/CD pipeline fully automated with Jenkins
 
-“Understand the process, don’t just follow instructions.”
+✔️ Dockerized Flask application
 
-👨‍💻 Author
+✔️ Deployed to EKS with zero downtime
+
+✔️ Real-time metrics using Prometheus and Grafana
+
+✔️ Scalable and production-ready architecture
+
+🌱 Future Enhancements
+
+Add user authentication and role-based access
+
+Integrate with RDS and S3 for production database and file storage
+
+Setup alerting in Grafana
+
+🙋‍♂️ Author
 Shiron Kurian
-Capstone Project – 2025
-LinkedIn: [Your LinkedIn]
-GitHub: [Your GitHub Profile]
-
-
-
----
-
-Would you like me to export this as a `.md` file for your GitHub repo or documentation folder?
+GitHub: https://github.com/ShironKurian/Project_Nexus.git  | Email : shironkurian@gmail.com| [Location: Kitchener, ON, Canada]
