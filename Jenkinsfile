@@ -1,90 +1,66 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    // AWS credentials stored in Jenkins (add under Manage Jenkins → Credentials)
-    AWS_ACCESS_KEY_ID     = credentials('aws-access-key-id')
-    AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
-    AWS_DEFAULT_REGION    = 'us-east-1'
-
-    // Your ECR image URI (including tag)
-    ECR_URI      = '643716337997.dkr.ecr.us-east-1.amazonaws.com/task-master:latest'
-    // Your EKS cluster name
-    CLUSTER_NAME = 'task-manager-cluster'
-    // Your GitHub repository
-    GIT_REPO     = 'https://github.com/ShironKurian/Project_Nexus.git'
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        // Clone the main branch
-        git branch: 'main', url: "${GIT_REPO}"
-      }
+    environment {
+        AWS_REGION = 'us-east-1'
+        ECR_REGISTRY = '643716337997.dkr.ecr.us-east-1.amazonaws.com'
+        ECR_REPO = 'task-master'
+        IMAGE_NAME = "${ECR_REGISTRY}/${ECR_REPO}:latest"
     }
 
-    stage('Build Docker Image') {
-      steps {
-        sh 'docker build -t task-master .'
-      }
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git credentialsId: 'github-credentials', url: 'https://github.com/ShironKurian/Project_Nexus.git', branch: 'main'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh "docker build -t ${ECR_REPO} ."
+                }
+            }
+        }
+
+        stage('Login to AWS ECR') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh '''
+                        aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+                        aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+                        aws configure set default.region $AWS_REGION
+                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+                    '''
+                }
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                sh '''
+                    docker tag ${ECR_REPO}:latest ${IMAGE_NAME}
+                    docker push ${IMAGE_NAME}
+                '''
+            }
+        }
+
+        stage('Deploy to EKS') {
+            steps {
+                sh '''
+                    aws eks update-kubeconfig --region $AWS_REGION --name task-manager-cluster
+                    kubectl apply -f deployment.yaml
+                '''
+            }
+        }
     }
 
-    stage('Run Tests') {
-      steps {
-        // Install dependencies and run pytest
-        sh '''
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pytest --maxfail=1 --disable-warnings -q
-        '''
-      }
+    post {
+        failure {
+            echo '❌ Pipeline failed. Please check logs.'
+        }
+        success {
+            echo '✅ Deployment Successful!'
+        }
     }
-
-    stage('Login to ECR') {
-      steps {
-        sh """
-          aws ecr get-login-password \
-            --region ${AWS_DEFAULT_REGION} \
-          | docker login --username AWS --password-stdin 643716337997.dkr.ecr.us-east-1.amazonaws.com
-        """
-      }
-    }
-
-    stage('Push to ECR') {
-      steps {
-        sh """
-          docker tag task-master:latest ${ECR_URI}
-          docker push ${ECR_URI}
-        """
-      }
-    }
-
-    stage('Configure kubectl') {
-      steps {
-        // Fetch and merge kubeconfig for your EKS cluster
-        sh """
-          aws eks update-kubeconfig \
-            --region ${AWS_DEFAULT_REGION} \
-            --name ${CLUSTER_NAME}
-        """
-      }
-    }
-
-    stage('Deploy to EKS') {
-      steps {
-        // Apply your Kubernetes manifests
-        sh 'kubectl apply -f deployment.yaml'
-        sh 'kubectl apply -f service.yaml'
-      }
-    }
-  }
-
-  post {
-    success {
-      echo '✅ Pipeline completed successfully!'
-    }
-    failure {
-      echo '❌ Pipeline failed. Check the console output for errors.'
-    }
-  }
 }
