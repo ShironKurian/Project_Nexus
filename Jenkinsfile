@@ -26,8 +26,9 @@ pipeline {
         stage('Run Unit Tests') {
             steps {
                 sh '''
-                    pip install -r requirements.txt
-                    pip install pytest
+                    python3 -m pip install --upgrade pip
+                    python3 -m pip install -r requirements.txt
+                    python3 -m pip install pytest
                     pytest tests/
                 '''
             }
