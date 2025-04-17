@@ -23,6 +23,16 @@ pipeline {
             }
         }
 
+        stage('Run Unit Tests') {
+            steps {
+                sh '''
+                    pip install -r requirements.txt
+                    pip install pytest
+                    pytest tests/
+                '''
+            }
+        }
+
         stage('Login to AWS ECR') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
