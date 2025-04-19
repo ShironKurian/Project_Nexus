@@ -1,25 +1,39 @@
 # Monitoring Setup Guide
 
 ## Prometheus Configuration
-- Install Prometheus
-- Configure scrape targets
-- Set up alert rules
-- Configure retention period
+### Installation
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install prometheus prometheus-community/prometheus
+```
+
+### Key Metrics to Monitor
+- CPU Usage
+- Memory Usage
+- API Response Times
+- Error Rates
+- Request Counts
 
 ## Grafana Setup
-- Install Grafana
-- Configure data sources
-- Create dashboards
-- Set up alerts
+### Installation
+```bash
+helm repo add grafana https://grafana.github.io/helm-charts
+helm install grafana grafana/grafana
+```
 
-## Metrics to Monitor
-- Application metrics
-- System metrics
-- Business metrics
-- Custom metrics
+### Dashboard Setup
+1. Application Metrics Dashboard
+2. Infrastructure Dashboard
+3. Error Tracking Dashboard
+4. Performance Dashboard
 
-## Alerting Configuration
-- Define alert rules
-- Configure notification channels
-- Set up escalation policies
-- Test alerting system 
+## Alert Configuration
+- CPU Usage > 80%
+- Memory Usage > 85%
+- Error Rate > 1%
+- Response Time > 2s
+
+## Retention Policies
+- Metrics: 30 days
+- Logs: 14 days
+- Alerts: 90 days 
